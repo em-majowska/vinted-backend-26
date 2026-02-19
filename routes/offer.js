@@ -100,6 +100,23 @@ router.put(
   },
 );
 
+// Delete offer
+router.delete('/offer/:id', isAuthenticated, async (req, res) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id))
+      throw res.status(400).json({ message: 'Invalid id' });
+    const offer = await Offer.findByIdAndDelete(req.params.id);
+
+    if (!offer) throw res.status(404).json({ message: 'Offer not found' });
+
+    res.status(200).json({ message: 'Offer successfully deleted' });
+  } catch (error) {
+    res
+      .status(error.status || 500)
+      .json({ message: error.message || 'Internal server error' });
+  }
+});
+
 // Search offers
 
 router.get('/offers', async (req, res) => {
