@@ -138,7 +138,7 @@ router.delete('/offer/:id', isAuthenticated, async (req, res) => {
   }
 });
 
-// Search offers
+// Search and filter offers
 router.get('/offers', async (req, res) => {
   try {
     const filters = {};
@@ -147,21 +147,28 @@ router.get('/offers', async (req, res) => {
     if (req.query.priceMin) filters.priceMin = req.query.priceMin;
     if (req.query.priceMax) filters.priceMax = req.query.priceMax;
 
-    // 'price-asc' , 'price-desc' ??
-    filters.sort =
-      req.query.sort === 'price-desc' || req.query.sort === 'price-asc'
-        ? req.query.sort
-        : 'price-desc';
+    // 2 types of sorting possible: 'price-asc' , 'price-desc' or 'name-asc', 'name'desc'
+    filters.sort = req.query.sort || 'price-desc';
+    // defines `skip`. Each page shows 5 items. If no page selected, it defaults to 1 (0 skipped items).
     filters.page = 5 * (req.query.page - 1) || 0;
 
+    // replace key according to sorting
+    const sortingKey = filters.sort.includes('price')
+      ? 'product_price'
+      : 'product_name';
+
     const offers = await Offer.find({
+      // if no filters provided, it defaults to :
       product_name: filters.title ?? /.*/,
       product_price: {
         $lte: filters.priceMax ?? Infinity,
         $gte: filters.priceMin ?? 0,
       },
     })
-      .sort({ product_price: filters.sort.replace('price-', '') })
+      // remove prefixes from filters
+      .sort({
+        [sortingKey]: filters.sort.replace('price-', '').replace('name-', ''),
+      })
       .select('product_name product_price')
       .limit(5)
       .skip(filters.page);
