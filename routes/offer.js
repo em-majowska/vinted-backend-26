@@ -15,13 +15,31 @@ router.post(
   isAuthenticated,
   fileUpload(),
   async (req, res) => {
+    //Upload pictures with ID path
     const pictures = await uploadPictures(req.files);
 
     try {
       const newOffer = new Offer({
-        product_name: req.body.name,
-        product_description: req.body.description,
-        product_price: req.body.price,
+        product_name:
+          req.body.name.length > 50
+            ? res.status(400).json({
+                message:
+                  'Title is too long. Shorten it to maximum 50 characters',
+              })
+            : req.body.name,
+        product_description:
+          req.body.description.length > 500
+            ? res.status(400).json({
+                message:
+                  'Description is too long. Shorten it to maximum 500 characters',
+              })
+            : req.body.description,
+        product_price:
+          req.body.price > 100000
+            ? res.status(400).json({
+                message: 'Price is too high. Lower it to maximum 100000€',
+              })
+            : req.body.price,
         product_details: [
           { brand: req.body.brand },
           { size: req.body.size },
@@ -29,14 +47,17 @@ router.post(
           { condition: req.body.condition },
           { city: req.body.city },
         ],
-        product_image: pictures.length > 1 ? pictures : pictures[0] || {},
+        product_image:
+          !pictures || !pictures.length
+            ? {}
+            : pictures.length > 1
+              ? pictures
+              : pictures[0],
 
         owner: req.user._id,
       });
 
-      //Upload pictures with ID path
-
-      await newOffer.save();
+      // await newOffer.save();
       await newOffer.populate('owner', 'email account');
 
       res.status(201).json({
@@ -118,7 +139,6 @@ router.delete('/offer/:id', isAuthenticated, async (req, res) => {
 });
 
 // Search offers
-
 router.get('/offers', async (req, res) => {
   try {
     const filters = {};
