@@ -7,7 +7,7 @@ const isAuthenticated = require('../middlewares/isAuthenticated');
 const convertToBase64 = require('../utils/convertToBase64');
 const uploadPictures = require('../services/uploadPictures');
 const Offer = require('../models/Offer');
-const { default: mongoose } = require('mongoose');
+const mongoose = require('mongoose');
 
 // Create an offer
 router.post(
@@ -142,36 +142,32 @@ router.delete('/offer/:id', isAuthenticated, async (req, res) => {
 router.get('/offers', async (req, res) => {
   try {
     const filters = {};
+    const sort = {};
 
-    if (req.query.title) filters.title = new RegExp(`${req.query.title}`, 'i');
-    if (req.query.priceMin) filters.priceMin = req.query.priceMin;
-    if (req.query.priceMax) filters.priceMax = req.query.priceMax;
+    if (req.query.title)
+      filters.product_name = new RegExp(`${req.query.title}`, 'i');
 
-    // 2 types of sorting possible: 'price-asc' , 'price-desc' or 'name-asc', 'name'desc'
-    filters.sort = req.query.sort || 'price-desc';
-    // defines `skip`. Each page shows 5 items. If no page selected, it defaults to 1 (0 skipped items).
-    filters.page = 5 * (req.query.page - 1) || 0;
+    if (req.query.priceMin || req.query.priceMax) {
+      filters.product_price = {};
+      if (req.query.priceMin)
+        filters.product_price['$gte'] = req.query.priceMin;
+      if (req.query.priceMax)
+        filters.product_price['$lte'] = req.query.priceMax;
+    }
+
+    sort.product_price = req.query.sort === 'price-asc' ? 'asc' : 'desc';
 
     // replace key according to sorting
-    const sortingKey = filters.sort.includes('price')
-      ? 'product_price'
-      : 'product_name';
+    // const sortingKey = filters.sort.includes('price')
+    //   ? 'product_price'
+    //   : 'product_name';
 
-    const offers = await Offer.find({
-      // if no filters provided, it defaults to :
-      product_name: filters.title ?? /.*/,
-      product_price: {
-        $lte: filters.priceMax ?? Infinity,
-        $gte: filters.priceMin ?? 0,
-      },
-    })
-      // remove prefixes from filters
-      .sort({
-        [sortingKey]: filters.sort.replace('price-', '').replace('name-', ''),
-      })
+    const offers = await Offer.find(filters)
+      .sort(sort)
       .select('product_name product_price')
-      .limit(5)
-      .skip(filters.page);
+      .limit(15)
+      // Each page shows 5 items. If no page selected, it defaults to 1 (0 skipped items).
+      .skip(5 * (req.query.page - 1) || 0);
 
     res.status(200).json(offers);
   } catch (error) {
