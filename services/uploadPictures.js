@@ -1,30 +1,25 @@
 const convertToBase64 = require('../utils/convertToBase64');
 const cloudinary = require('cloudinary').v2;
 
-const uploadPictures = async (req, res, next) => {
-  if (req.files === null || req.files.pictures.length === 0) {
-    res.send('No file uploaded!');
-    return;
-  }
+const uploadPictures = async (files) => {
+  if (files === null || files.pictures.length === 0) return;
 
   const arrayoOfPictures = [];
-  if (Array.isArray(req.files.pictures)) {
-    for (let i = 0; i < req.files.pictures.length; i++) {
-      const picture = req.files.pictures[i];
+  if (Array.isArray(files.pictures)) {
+    for (let i = 0; i < files.pictures.length; i++) {
+      const picture = files.pictures[i];
       const result = await cloudinary.uploader.upload(convertToBase64(picture));
       arrayoOfPictures.push(result);
     }
   } else {
     const picture = await cloudinary.uploader.upload(
-      convertToBase64(req.files.pictures),
+      convertToBase64(files.pictures),
     );
 
     arrayoOfPictures.push(picture);
   }
 
-  req.body.pictureObjects = arrayoOfPictures;
-
-  next();
+  return arrayoOfPictures;
 };
 
 module.exports = uploadPictures;
