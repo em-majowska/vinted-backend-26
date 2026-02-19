@@ -1,5 +1,7 @@
 const express = require('express');
 const router = express.Router();
+const fileUpload = require('express-fileupload');
+const uploadPictures = require('../services/uploadPictures');
 
 // Import encryption packages
 const uid2 = require('uid2');
@@ -9,7 +11,7 @@ const encBase64 = require('crypto-js/enc-base64');
 // Import DB models
 const User = require('../models/User');
 
-router.post('/user/signup', async (req, res) => {
+router.post('/user/signup', fileUpload(), async (req, res) => {
   try {
     const data = req.body;
 
@@ -35,10 +37,14 @@ router.post('/user/signup', async (req, res) => {
     const hash = SHA256(data.password + salt).toString(encBase64);
     const token = uid2(64);
 
+    // Upload avatar
+    const pictures = await uploadPictures(req.files);
+
     // Create new user
     const newUser = new User({
       account: {
         username: data.username,
+        avatar: pictures[0],
       },
       email: data.email,
       newsletter: data.newsletter,
