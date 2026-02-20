@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cloudinary = require('cloudinary').v2;
@@ -5,11 +6,11 @@ const cloudinary = require('cloudinary').v2;
 // Initialize the server
 const app = express();
 
-// Make sure the server can read Body parameters
+// For the server to read Body parameters
 app.use(express.json());
 
-//Connect to MongoDB
-mongoose.connect('mongodb://localhost:27017/vinted-app');
+// Connect to MongoDB
+mongoose.connect(process.env.MONGODB_URI);
 
 // Import routes
 const userRoutes = require('./routes/user');
@@ -19,9 +20,9 @@ app.use(offerRoutes);
 
 // Connect to cloudinary
 cloudinary.config({
-  cloud_name: 'dghjtavmr',
-  api_key: '982935578138151',
-  api_secret: 'Ax2w4aGIuf9mxsDxlP2xE7zOGjQ',
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
 // Fallback for unknown routes
@@ -29,4 +30,4 @@ app.all(/.*/, (req, res) =>
   res.status(404).json({ message: 'Route does not exist' }),
 );
 
-app.listen(3000, () => console.log('Server has started'));
+app.listen(process.env.PORT, () => console.log('Server has started'));

@@ -57,7 +57,6 @@ router.post(
         owner: req.user._id,
       });
 
-      // await newOffer.save();
       await newOffer.populate('owner', 'email account');
 
       res.status(201).json({
@@ -142,7 +141,10 @@ router.delete('/offer/:id', isAuthenticated, async (req, res) => {
 router.get('/offers', async (req, res) => {
   try {
     const filters = {};
-    const sort = {};
+    const sortFilters = {};
+    const limitFilters = 15;
+    // Each page shows 15 items. If no page selected, it defaults to 1 (0 skipped items).
+    const skipFilters = limitFilters * (Number(req.query.page) - 1) || 0;
 
     if (req.query.title)
       filters.product_name = new RegExp(`${req.query.title}`, 'i');
@@ -150,12 +152,15 @@ router.get('/offers', async (req, res) => {
     if (req.query.priceMin || req.query.priceMax) {
       filters.product_price = {};
       if (req.query.priceMin)
-        filters.product_price['$gte'] = req.query.priceMin;
+        filters.product_price['$gte'] = Number(req.query.priceMin);
       if (req.query.priceMax)
-        filters.product_price['$lte'] = req.query.priceMax;
+        filters.product_price['$lte'] = Number(req.query.priceMax);
     }
-
-    sort.product_price = req.query.sort === 'price-asc' ? 'asc' : 'desc';
+    if (req.query.sort === 'price-asc') {
+      sort.product_price = 'asc';
+    } else if (req.query.sort === 'price-desc') {
+      sort.product_price = 'desc';
+    }
 
     // replace key according to sorting
     // const sortingKey = filters.sort.includes('price')
@@ -163,13 +168,15 @@ router.get('/offers', async (req, res) => {
     //   : 'product_name';
 
     const offers = await Offer.find(filters)
-      .sort(sort)
-      .select('product_name product_price')
-      .limit(15)
-      // Each page shows 5 items. If no page selected, it defaults to 1 (0 skipped items).
-      .skip(5 * (req.query.page - 1) || 0);
+      .sort(sortFilters)
+      // .select('product_name product_price')
+      .limit(limitFilters)
+      .skip(skipFilters)
+      .populate('owner', 'account');
 
-    res.status(200).json(offers);
+    const count = await Offer.countDocuments(filters);
+
+    res.status(200).json({ count: count, offers: offers });
   } catch (error) {
     res
       .status(error.status || 500)
