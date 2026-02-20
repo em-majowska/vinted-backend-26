@@ -25,6 +25,9 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
+app.get('/', (req, res) => {
+  res.status(200).json({ message: 'Welcome! 🐨' });
+});
 // Fallback for unknown routes
 app.all(/.*/, (req, res) =>
   res.status(404).json({ message: 'Route does not exist' }),
