@@ -1,7 +1,9 @@
-require('dotenv').config();
-const express = require('express');
-const mongoose = require('mongoose');
-const cloudinary = require('cloudinary').v2;
+require("dotenv").config();
+const express = require("express");
+const mongoose = require("mongoose");
+const cloudinary = require("cloudinary").v2;
+const cors = require("cors");
+app.use(cors());
 
 // Initialize the server
 const app = express();
@@ -13,8 +15,8 @@ app.use(express.json());
 mongoose.connect(process.env.MONGODB_URI);
 
 // Import routes
-const userRoutes = require('./routes/user');
-const offerRoutes = require('./routes/offer');
+const userRoutes = require("./routes/user");
+const offerRoutes = require("./routes/offer");
 app.use(userRoutes);
 app.use(offerRoutes);
 
@@ -25,12 +27,12 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-app.get('/', (req, res) => {
-  res.status(200).json({ message: 'Welcome! 🐨' });
+app.get("/", (req, res) => {
+  res.status(200).json({ message: "Welcome! 🐨" });
 });
 // Fallback for unknown routes
 app.all(/.*/, (req, res) =>
-  res.status(404).json({ message: 'Route does not exist' }),
+  res.status(404).json({ message: "Route does not exist !" }),
 );
 
-app.listen(process.env.PORT, () => console.log('Server has started'));
+app.listen(process.env.PORT, () => console.log("Server has started"));
