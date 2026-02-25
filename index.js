@@ -3,10 +3,10 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cloudinary = require("cloudinary").v2;
 const cors = require("cors");
-app.use(cors());
 
 // Initialize the server
 const app = express();
+app.use(cors());
 
 // For the server to read Body parameters
 app.use(express.json());
