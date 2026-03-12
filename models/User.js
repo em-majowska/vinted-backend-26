@@ -1,13 +1,13 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const User = mongoose.model('User', {
+const User = mongoose.model("User", {
   account: {
     username: {
       type: String,
       required: true,
       unique: true,
     },
-    avatar: Object,
+    avatar: Array,
   },
   email: {
     type: String,
