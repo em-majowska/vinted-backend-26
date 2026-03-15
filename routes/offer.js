@@ -91,7 +91,7 @@ router.put(
             { ÉTAT: req.body.condition && req.body.condition },
             { COULEUR: req.body.color && req.body.color },
             { EMPLACEMENT: req.body.city && req.body.city },
-            { "MODES DE PAIEMENT": data.payment && data.payment },
+            { "MODES DE PAIEMENT": data.payment && req.body.payment },
           ],
           product_image: !pictures || !pictures.length ? {} : pictures,
         },
