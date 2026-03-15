@@ -77,35 +77,37 @@ router.put(
     try {
       if (!mongoose.isValidObjectId(req.params.id))
         throw res.status(400).json({ message: "Invalid id" });
-
+      const pictures = await uploadPictures(req.files, data);
+      // todo finish check and add swap pictures
       const offer = await Offer.findByIdAndUpdate(
         req.params.id,
         {
-          product_name: req.body.name,
-          product_description: req.body.description,
-          product_price: req.body.price,
+          product_name: req.body.name && req.body.name,
+          product_description: req.body.description && req.body.description,
+          product_price: req.body.price && req.body.price,
           product_details: [
-            { MARQUE: req.body.brand },
-            { TAILLE: req.body.size },
-            { ÉTAT: req.body.condition },
-            { COULEUR: req.body.color },
-            { EMPLACEMENT: req.body.city },
-            { "MODES DE PAIEMENT": data.payment },
+            { MARQUE: req.body.brand && req.body.brand },
+            { TAILLE: req.body.size && req.body.size },
+            { ÉTAT: req.body.condition && req.body.condition },
+            { COULEUR: req.body.color && req.body.color },
+            { EMPLACEMENT: req.body.city && req.body.city },
+            { "MODES DE PAIEMENT": data.payment && data.payment },
           ],
+          product_image: !pictures || !pictures.length ? {} : pictures,
         },
         { new: true },
       );
 
       if (!offer) throw res.status(400).json({ message: "Offer not found" });
 
-      if (req.files) {
-        offer.product_image = await cloudinary.uploader.upload(
-          convertToBase64(req.files.pictures),
-          { folder: `vinted/offers/${offer._id}` },
-        );
+      // if (req.files) {
+      //   offer.product_image = await cloudinary.uploader.upload(
+      //     convertToBase64(req.files.pictures),
+      //     { folder: `vinted/offers/${offer._id}` },
+      //   );
 
-        await offer.save();
-      }
+      //   await offer.save();
+      // }
 
       res
         .status(200)
@@ -159,11 +161,6 @@ router.get("/offers", async (req, res) => {
     } else if (req.query.sort === "price-desc") {
       sort.product_price = "desc";
     }
-
-    // replace key according to sorting
-    // const sortingKey = filters.sort.includes('price')
-    //   ? 'product_price'
-    //   : 'product_name';
 
     const offers = await Offer.find(filters)
       .sort(sortFilters)
