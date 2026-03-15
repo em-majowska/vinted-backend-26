@@ -42,11 +42,12 @@ router.post(
               })
             : data.price,
         product_details: [
-          { brand: data.brand },
-          { size: data.size },
-          { color: data.color },
-          { condition: data.condition },
-          { city: data.city },
+          { MARQUE: data.brand || "autre" },
+          data.size && { TAIILE: data.size },
+          data.condition && { ÉTAT: data.condition },
+          data.color && { COULEUR: data.color },
+          data.city && { EMPLACEMENT: data.city },
+          data.payment && { "MODES DE PAIEMENT": data.payment },
         ],
         product_image: !pictures || !pictures.length ? {} : pictures,
 
@@ -54,7 +55,7 @@ router.post(
       });
 
       await newOffer.populate("owner", "email account");
-
+      await newOffer.save();
       res.status(201).json({
         message: "Offer successfully created",
         data: newOffer,
@@ -84,11 +85,12 @@ router.put(
           product_description: req.body.description,
           product_price: req.body.price,
           product_details: [
-            { brand: req.body.brand },
-            { size: req.body.size },
-            { color: req.body.color },
-            { condition: req.body.condition },
-            { city: req.body.city },
+            { MARQUE: req.body.brand },
+            { TAILLE: req.body.size },
+            { ÉTAT: req.body.condition },
+            { COULEUR: req.body.color },
+            { EMPLACEMENT: req.body.city },
+            { "MODES DE PAIEMENT": data.payment },
           ],
         },
         { new: true },
