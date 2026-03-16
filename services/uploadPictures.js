@@ -3,23 +3,29 @@ const cloudinary = require("cloudinary").v2;
 
 // arguments : files, data
 const uploadPictures = async (files, data) => {
-  if (files === null || files.pictures.length === 0) return [];
+  if (files === null || files.picture.length === 0) return [];
 
-  const picturesToUpload = Array.isArray(files.pictures)
-    ? files.pictures
-    : [files.pictures];
-
-  console.log(data);
-  const promises = picturesToUpload.map((picture) => {
-    if (typeof data !== "undefined" && data.username) {
-      return cloudinary.uploader.upload(convertToBase64(picture), {
+  // if it's a picture for avatar
+  if (typeof data !== "undefined" && data.username) {
+    const result = await cloudinary.uploader.upload(
+      convertToBase64(files.picture),
+      {
         folder: `vinted/avatars`,
-      });
-    } else {
-      return cloudinary.uploader.upload(convertToBase64(picture), {
-        folder: "vinted/products",
-      });
-    }
+      },
+    );
+
+    return result;
+  }
+  // if it's pictures for a product
+
+  const picturesToUpload = Array.isArray(files.picture)
+    ? files.picture
+    : [files.picture];
+
+  const promises = picturesToUpload.map((picture) => {
+    return cloudinary.uploader.upload(convertToBase64(picture), {
+      folder: "vinted/products",
+    });
   });
 
   const arrayOfPictures = await Promise.all(promises);

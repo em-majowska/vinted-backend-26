@@ -20,34 +20,35 @@ router.post(
     try {
       const newOffer = new Offer({
         product_name:
-          data.name.length > 100
+          data.title && data.title.length > 100
             ? res.status(400).json({
                 message:
                   "Title is too long. Shorten it to maximum 100 characters",
               })
-            : data.name,
+            : data.title,
         product_description:
-          data.description.length > 500
+          data.description && data.description.length > 500
             ? res.status(400).json({
                 message:
                   "Description is too long. Shorten it to maximum 500 characters",
               })
             : data.description,
         product_price:
-          data.price > 1000
+          data.price && data.price > 1000
             ? res.status(400).json({
                 message: "Price is too high. Lower it to maximum 1 000 €",
               })
             : data.price,
         product_details: [
           { MARQUE: data.brand || "autre" },
-          data.size && { TAIILE: data.size },
-          data.condition && { ÉTAT: data.condition },
-          data.color && { COULEUR: data.color },
-          data.city && { EMPLACEMENT: data.city },
-          data.payment && { "MODES DE PAIEMENT": data.payment },
+          { TAIILE: data.size && data.size },
+          { ÉTAT: data.condition && data.condition },
+          { COULEUR: data.color && data.color },
+          { EMPLACEMENT: data.city && data.city },
+          { "MODES DE PAIEMENT": data.payment && data.payment },
         ],
-        product_image: !pictures || !pictures.length ? {} : pictures,
+        product_pictures: !pictures || !pictures.length ? [] : pictures,
+        product_image: !pictures || !pictures.length ? {} : pictures[0],
 
         owner: req.user._id,
       });
@@ -115,7 +116,11 @@ router.put(
 
       // update pictures if provided
       const pictures = await uploadPictures(req.files, data);
-      updateData.product_image = pictures;
+      updateData.product_image =
+        !pictures || pictures.length ? {} : pictures[0];
+
+      updateData.product_pictures =
+        !pictures || !pictures.length ? [] : pictures;
 
       // pass updated data to DB
       const offer = await Offer.findByIdAndUpdate(req.params.id, updateData, {
@@ -172,9 +177,9 @@ router.get("/offers", async (req, res) => {
         filters.product_price["$lte"] = Number(req.query.priceMax);
     }
     if (req.query.sort === "price-asc") {
-      sort.product_price = "asc";
+      sortFilters.product_price = "asc";
     } else if (req.query.sort === "price-desc") {
-      sort.product_price = "desc";
+      sortFilters.product_price = "desc";
     }
 
     const offers = await Offer.find(filters)
@@ -184,6 +189,7 @@ router.get("/offers", async (req, res) => {
       .populate("owner", "account");
 
     const count = await Offer.countDocuments(filters);
+    // console.log(offers);
 
     res.status(200).json({ count: count, offers: offers });
   } catch (error) {
@@ -194,7 +200,7 @@ router.get("/offers", async (req, res) => {
 });
 
 // Search offer by id
-router.get("/offers/:id", async (req, res) => {
+router.get("/offer/:id", async (req, res) => {
   try {
     if (!mongoose.isValidObjectId(req.params.id))
       throw res.status(400).json({ message: "Invalid id" });

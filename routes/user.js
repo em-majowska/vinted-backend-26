@@ -38,13 +38,13 @@ router.post("/user/signup", fileUpload(), async (req, res) => {
     const token = uid2(64);
 
     // Upload avatar
-    const pictures = await uploadPictures(req.files, data);
+    const picture = await uploadPictures(req.files, data);
 
     // Create new user
     const newUser = new User({
       account: {
         username: data.username,
-        avatar: pictures,
+        avatar: picture,
       },
       email: data.email,
       newsletter: data.newsletter,
