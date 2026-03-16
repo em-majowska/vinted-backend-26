@@ -1,10 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const fileUpload = require("express-fileupload");
-const cloudinary = require("cloudinary").v2;
 
 const isAuthenticated = require("../middlewares/isAuthenticated");
-const convertToBase64 = require("../utils/convertToBase64");
 const uploadPictures = require("../services/uploadPictures");
 const Offer = require("../models/Offer");
 const mongoose = require("mongoose");
@@ -22,10 +20,10 @@ router.post(
     try {
       const newOffer = new Offer({
         product_name:
-          data.name.length > 50
+          data.name.length > 100
             ? res.status(400).json({
                 message:
-                  "Title is too long. Shorten it to maximum 50 characters",
+                  "Title is too long. Shorten it to maximum 100 characters",
               })
             : data.name,
         product_description:
@@ -36,9 +34,9 @@ router.post(
               })
             : data.description,
         product_price:
-          data.price > 100000
+          data.price > 1000
             ? res.status(400).json({
-                message: "Price is too high. Lower it to maximum 100000€",
+                message: "Price is too high. Lower it to maximum 1 000 €",
               })
             : data.price,
         product_details: [
@@ -77,37 +75,54 @@ router.put(
     try {
       if (!mongoose.isValidObjectId(req.params.id))
         throw res.status(400).json({ message: "Invalid id" });
+
+      const data = req.body;
+      const updateData = {};
+
+      // check if user wants to modify text data
+      if (data) {
+        // update product basic information if they exist
+        if (data.name) updateData.product_name = data.name;
+        if (data.description) updateData.product_description = data.description;
+        if (data.price) updateData.product_price = data.price;
+
+        // update product_details if any of the keys exist
+        if (
+          data.brand ||
+          data.size ||
+          data.condition ||
+          data.color ||
+          data.city ||
+          data.payment
+        ) {
+          updateData.product_details = [];
+          if (data.brand)
+            updateData.product_details.push({ MARQUE: data.brand });
+          if (data.size) updateData.product_details.push({ TAILLE: data.size });
+          if (data.condition)
+            updateData.product_details.push({ ÉTAT: data.condition });
+          if (data.color)
+            updateData.product_details.push({ COULEUR: data.color });
+          if (data.city)
+            updateData.product_details.push({ EMPLACEMENT: data.city });
+          if (data.payment)
+            updateData.product_details.push({
+              "MODES DE PAIEMENT": data.payment,
+            });
+          if (data.brand) update;
+        }
+      }
+
+      // update pictures if provided
       const pictures = await uploadPictures(req.files, data);
-      // todo finish check and add swap pictures
-      const offer = await Offer.findByIdAndUpdate(
-        req.params.id,
-        {
-          product_name: req.body.name && req.body.name,
-          product_description: req.body.description && req.body.description,
-          product_price: req.body.price && req.body.price,
-          product_details: [
-            { MARQUE: req.body.brand && req.body.brand },
-            { TAILLE: req.body.size && req.body.size },
-            { ÉTAT: req.body.condition && req.body.condition },
-            { COULEUR: req.body.color && req.body.color },
-            { EMPLACEMENT: req.body.city && req.body.city },
-            { "MODES DE PAIEMENT": data.payment && req.body.payment },
-          ],
-          product_image: !pictures || !pictures.length ? {} : pictures,
-        },
-        { new: true },
-      );
+      updateData.product_image = pictures;
+
+      // pass updated data to DB
+      const offer = await Offer.findByIdAndUpdate(req.params.id, updateData, {
+        new: true,
+      });
 
       if (!offer) throw res.status(400).json({ message: "Offer not found" });
-
-      // if (req.files) {
-      //   offer.product_image = await cloudinary.uploader.upload(
-      //     convertToBase64(req.files.pictures),
-      //     { folder: `vinted/offers/${offer._id}` },
-      //   );
-
-      //   await offer.save();
-      // }
 
       res
         .status(200)
@@ -164,7 +179,6 @@ router.get("/offers", async (req, res) => {
 
     const offers = await Offer.find(filters)
       .sort(sortFilters)
-      // .select("product_name product_price")
       .limit(limitFilters)
       .skip(skipFilters)
       .populate("owner", "account");

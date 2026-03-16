@@ -9,8 +9,9 @@ const uploadPictures = async (files, data) => {
     ? files.pictures
     : [files.pictures];
 
+  console.log(data);
   const promises = picturesToUpload.map((picture) => {
-    if (data.username) {
+    if (typeof data !== "undefined" && data.username) {
       return cloudinary.uploader.upload(convertToBase64(picture), {
         folder: `vinted/avatars`,
       });
