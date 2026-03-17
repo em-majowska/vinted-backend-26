@@ -19,6 +19,7 @@
     "express": "^5.2.1",
     "express-fileupload": "^1.5.2",
     "mongoose": "^9.2.1",
+    "stripe": "^20.4.1",
     "uid2": "^1.0.0"
   }
 }
