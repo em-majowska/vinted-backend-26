@@ -49,6 +49,7 @@ router.post(
         ],
         product_pictures: !pictures || !pictures.length ? [] : pictures,
         product_image: !pictures || !pictures.length ? {} : pictures[0],
+        product_creationDate: new Date(),
 
         owner: req.user._id,
       });
