@@ -190,7 +190,6 @@ router.get("/offers", async (req, res) => {
       .populate("owner", "account");
 
     const count = await Offer.countDocuments(filters);
-    // console.log(offers);
 
     res.status(200).json({ count: count, offers: offers });
   } catch (error) {
